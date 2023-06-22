@@ -1,29 +1,29 @@
 package main
 
 import (
-	"os"
+	"database/sql"
 	"time"
 )
 
-var homedir string = os.Getenv("HOME")
-var editor string = os.Getenv("EDITOR")
-var configLocation string = (homedir + "/" + ConfigDir + "/config.json")
-var cacheLocation string = (homedir + "/" + CacheDir)
-var feedsConfig string = "./feeds.ini"
-var timezone, _ = time.Now().Zone()
-var colorBlock string = "|"
-var currentDot string = "•"
-var Colors = [10]string{"\033[0;31m", "\033[0;32m", "\033[1;33m", "\033[1;34m", "\033[1;35m", "\033[1;36m", "\033[1;37m", "\033[1;38m", "\033[1;39m", "\033[1;40m"}
-var showColor bool = true
-var maxItemAgeHours time.Duration
+var maxItemAgeHours time.Duration = 1
+var fetchIntervalMinutes time.Duration = 15
 var atomstrversion string = "0.1"
 
 const (
-	ConfigDir  = "config.yml"
-	CacheDir   = ".cache/atomstr"
-	dateFormat = "02.01.06"
-	dbPath     = "./atomstr.db"
+	dbPath = "./atomstr.db"
 )
+
+type atomstr struct {
+	Secret                        string   `envconfig:"SECRET" required:"true"`
+	dbPath2                       string   `envconfig:"DB_DIR" default:"./atomstr.db2"`
+	DefaultProfilePictureUrl      string   `envconfig:"DEFAULT_PROFILE_PICTURE_URL" default:"https://i.imgur.com/MaceU96.png"`
+	RelaysToPublish               []string `envconfig:"RELAYS_TO_PUBLISH_TO" default:"wss://nostr.data.haus"`
+	DefaultWaitTimeBetweenBatches int64    `envconfig:"DEFAULT_WAIT_TIME_BETWEEN_BATCHES" default:"60000"`
+	EnableAutoNIP05Registration   bool     `envconfig:"ENABLE_AUTO_NIP05_REGISTRATION" default:"false"`
+	MainDomainName                string   `envconfig:"MAIN_DOMAIN_NAME" default:""`
+
+	db *sql.DB
+}
 
 var sqlInit = `
 CREATE TABLE IF NOT EXISTS feeds (
@@ -33,28 +33,24 @@ CREATE TABLE IF NOT EXISTS feeds (
 );
 `
 
-type configStruct struct {
-	Npub      string
-	Nsec      string
-	HomeRelay string
-}
-
-type allFeedsStruct struct {
-	Feeds []feedStruct
-}
-
 type feedStruct struct {
-	Url string
-	Sec string
-	Pub string
+	Url         string
+	Sec         string
+	Pub         string
+	Title       string
+	Description string
+	Link        string
+	Image       string
 }
 
-type eventStruct struct {
-	Id       string
-	Contacts []struct {
-		p string
-	}
-	Relays string
+type postStruct struct {
+	Url       string
+	Pub       string
+	Sec       string
+	Timestamp time.Time
+	Message   string
+	Feedname  string
+	Feedicon  string
 }
 
 type feedItemStruct struct {
