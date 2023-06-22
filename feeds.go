@@ -70,7 +70,7 @@ func processFeedUrl(feedItem *feedStruct) {
 	if feed.Image != nil {
 		feedItem.Image = feed.Image.URL
 	} else {
-		feedItem.Image = "https://void.cat/d/NDrSDe4QMx9jh6bD9LJwcK" // FIXME
+		feedItem.Image = defaultFeedImage
 	}
 	//feedItem.Image = feed.Image
 	nostrUpdateFeed(feedItem)
@@ -81,7 +81,6 @@ func processFeedUrl(feedItem *feedStruct) {
 
 func processFeedPost(feedItem *feedStruct, feedPost *gofeed.Item) {
 	// if time right, then push
-	//maxItemAgeHours = 1               // TODO: config
 	p := bluemonday.StripTagsPolicy() // initialize html sanitizer
 
 	if checkMaxAge(feedPost.Published, maxItemAgeHours) {
@@ -91,7 +90,6 @@ func processFeedPost(feedItem *feedStruct, feedPost *gofeed.Item) {
 		}
 		postTime := convertTimeString(feedPost.Published)
 
-		//postToPublish := postStruct{}
 		ev := nostr.Event{
 			PubKey:    feedItem.Pub,
 			CreatedAt: nostr.Timestamp(postTime.Unix()),
@@ -116,7 +114,7 @@ func processFeedPost(feedItem *feedStruct, feedPost *gofeed.Item) {
 func nostrPostItem(ev nostr.Event) {
 	ctx := context.Background()
 	//for _, url := range []string{"wss://nostr.data.haus", "wss://nostr-pub.wellorder.net"} {
-	for _, url := range []string{"wss://nostr.data.haus"} { // FIXME
+	for _, url := range relaysToPublishTo {
 		relay, err := nostr.RelayConnect(ctx, url)
 		if err != nil {
 			fmt.Println(err)

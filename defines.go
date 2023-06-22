@@ -8,9 +8,11 @@ import (
 var maxItemAgeHours time.Duration = 1
 var fetchIntervalMinutes time.Duration = 15
 var atomstrversion string = "0.1"
+var relaysToPublishTo = [...]string{"wss://nostr.data.haus"}
 
 const (
-	dbPath = "./atomstr.db"
+	dbPath           = "./atomstr.db"
+	defaultFeedImage = "https://void.cat/d/NDrSDe4QMx9jh6bD9LJwcK"
 )
 
 type atomstr struct {
@@ -41,20 +43,4 @@ type feedStruct struct {
 	Description string
 	Link        string
 	Image       string
-}
-
-type postStruct struct {
-	Url       string
-	Pub       string
-	Sec       string
-	Timestamp time.Time
-	Message   string
-	Feedname  string
-	Feedicon  string
-}
-
-type feedItemStruct struct {
-	Title     string
-	Published string
-	Link      string
 }
