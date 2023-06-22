@@ -22,12 +22,31 @@ const (
 	ConfigDir  = "config.yml"
 	CacheDir   = ".cache/atomstr"
 	dateFormat = "02.01.06"
+	dbPath     = "./atomstr.db"
 )
+
+var sqlInit = `
+CREATE TABLE IF NOT EXISTS feeds (
+	pub VARCHAR(64) PRIMARY KEY,
+	sec VARCHAR(64) NOT NULL,
+	url TEXT NOT NULL
+);
+`
 
 type configStruct struct {
 	Npub      string
 	Nsec      string
 	HomeRelay string
+}
+
+type allFeedsStruct struct {
+	Feeds []feedStruct
+}
+
+type feedStruct struct {
+	Url string
+	Sec string
+	Pub string
 }
 
 type eventStruct struct {
