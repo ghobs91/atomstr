@@ -18,7 +18,7 @@ func dbGetAllFeeds(db *sql.DB) *[]feedStruct {
 	sqlStatement := `SELECT pub, sec, url FROM feeds`
 	rows, err := db.Query(sqlStatement)
 	if err != nil {
-		log.Fatal("[ERROR]: Returning feeds")
+		log.Fatal("[ERROR] Returning feeds from DB failed")
 	}
 
 	feedItems := []feedStruct{}
@@ -26,7 +26,7 @@ func dbGetAllFeeds(db *sql.DB) *[]feedStruct {
 	for rows.Next() {
 		feedItem := feedStruct{}
 		if err := rows.Scan(&feedItem.Pub, &feedItem.Sec, &feedItem.Url); err != nil {
-			log.Fatal("[ERROR]: Scanning for feeds")
+			log.Fatal("[ERROR] Scanning for feeds failed")
 		}
 		feedItems = append(feedItems, feedItem)
 	}
@@ -34,7 +34,7 @@ func dbGetAllFeeds(db *sql.DB) *[]feedStruct {
 	return &feedItems
 }
 
-func nostrUpdateFeed(feedItem *feedStruct) {
+func nostrUpdateFeedMetadata(feedItem *feedStruct) {
 	//fmt.Println(feedItem)
 
 	metadata := map[string]string{
@@ -54,9 +54,24 @@ func nostrUpdateFeed(feedItem *feedStruct) {
 	}
 	ev.ID = string(ev.Serialize())
 	ev.Sign(feedItem.Sec)
-	log.Println("[INFO] Updating feed metadata")
+	log.Println("[INFO] Updating feed metadata for " + feedItem.Title)
 
 	nostrPostItem(ev)
+}
+
+func nostrUpdateAllFeedsMetadata(db *sql.DB) {
+	feeds := dbGetAllFeeds(db)
+
+	log.Println("[INFO] Updating feeds metadata")
+	for _, feedItem := range *feeds {
+		data := checkValidFeedSource(feedItem.Url)
+		feedItem.Title = data.Title
+		feedItem.Description = data.Description
+		feedItem.Link = data.Link
+		feedItem.Image = data.Image
+		nostrUpdateFeedMetadata(&feedItem)
+	}
+	log.Println("[INFO] Finished updating feeds metadata")
 }
 
 func processFeedUrl(feedItem *feedStruct) {
@@ -73,7 +88,7 @@ func processFeedUrl(feedItem *feedStruct) {
 		feedItem.Image = defaultFeedImage
 	}
 	//feedItem.Image = feed.Image
-	nostrUpdateFeed(feedItem)
+
 	for i := range feed.Items {
 		processFeedPost(feedItem, feed.Items[i])
 	}
@@ -154,25 +169,37 @@ func dbGetFeed(db *sql.DB, feedUrl string) *feedStruct {
 	return &feedItem
 }
 
-func checkValidFeedSource(feedUrl string) string {
+func checkValidFeedSource(feedUrl string) *feedStruct {
 	log.Println("[INFO] Trying to find feed at " + feedUrl)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	fp := gofeed.NewParser()
 	feed, err := fp.ParseURLWithContext(feedUrl, ctx)
-	fmt.Println(feedUrl)
-	fmt.Println(feed.Title)
+
 	if err != nil {
 		log.Println("[ERROR] Not a valid feed source")
-		log.Fatal(err)
 	}
 
-	return feed.Title
+	feedItem := feedStruct{}
+	feedItem.Title = feed.Title
+	feedItem.Description = feed.Description
+	feedItem.Link = feed.Link
+	if feed.Image != nil {
+		feedItem.Image = feed.Image.URL
+	} else {
+		feedItem.Image = defaultFeedImage
+	}
+
+	return &feedItem
 }
 
 func addSource(db *sql.DB, feedUrl string) *feedStruct {
 	//var feedElem2 *feedStruct
-	checkValidFeedSource(feedUrl)
+	feedItem := checkValidFeedSource(feedUrl)
+	if feedItem.Title == "" {
+		log.Println("[ERROR] No valid feed found on " + feedUrl)
+		log.Fatal("nope")
+	}
 
 	// check for existing feed
 	feedTest := dbGetFeed(db, feedUrl)
@@ -181,7 +208,7 @@ func addSource(db *sql.DB, feedUrl string) *feedStruct {
 		log.Fatal()
 	}
 
-	feedItem := generateKeysForUrl(feedUrl)
+	feedItem = generateKeysForUrl(feedUrl)
 
 	dbWriteFeed(db, feedItem)
 

@@ -12,12 +12,15 @@ import (
 func processFeeds(db *sql.DB) {
 	feeds := dbGetAllFeeds(db)
 	if len(*feeds) == 0 {
+		log.Println("[INFO] No feeds found")
 		log.Fatal("no feeds")
 	}
 	//fmt.Println(feeds)
+	log.Println("[INFO] Updating feeds")
 	for _, feedItem := range *feeds {
 		processFeedUrl(&feedItem)
 	}
+	log.Println("[INFO] Finished updating feeds")
 }
 
 func main() {
@@ -34,9 +37,20 @@ func main() {
 	} else if flagset["l"] {
 		listFeeds(db)
 	} else {
+		// first run
+		nostrUpdateAllFeedsMetadata(db)
 		processFeeds(db)
-		for range time.Tick(time.Minute * fetchIntervalMinutes) {
-			processFeeds(db)
+
+		metadataTicker := time.NewTicker(time.Hour * 1)
+		updateTicker := time.NewTicker(time.Minute * fetchIntervalMinutes)
+
+		for {
+			select {
+			case <-metadataTicker.C:
+				nostrUpdateAllFeedsMetadata(db)
+			case <-updateTicker.C:
+				processFeeds(db)
+			}
 		}
 
 	}

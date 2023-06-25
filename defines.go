@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"time"
 )
 
@@ -14,18 +13,6 @@ const (
 	dbPath           = "./atomstr.db"
 	defaultFeedImage = "https://void.cat/d/NDrSDe4QMx9jh6bD9LJwcK"
 )
-
-type atomstr struct {
-	Secret                        string   `envconfig:"SECRET" required:"true"`
-	dbPath2                       string   `envconfig:"DB_DIR" default:"./atomstr.db2"`
-	DefaultProfilePictureUrl      string   `envconfig:"DEFAULT_PROFILE_PICTURE_URL" default:"https://i.imgur.com/MaceU96.png"`
-	RelaysToPublish               []string `envconfig:"RELAYS_TO_PUBLISH_TO" default:"wss://nostr.data.haus"`
-	DefaultWaitTimeBetweenBatches int64    `envconfig:"DEFAULT_WAIT_TIME_BETWEEN_BATCHES" default:"60000"`
-	EnableAutoNIP05Registration   bool     `envconfig:"ENABLE_AUTO_NIP05_REGISTRATION" default:"false"`
-	MainDomainName                string   `envconfig:"MAIN_DOMAIN_NAME" default:""`
-
-	db *sql.DB
-}
 
 var sqlInit = `
 CREATE TABLE IF NOT EXISTS feeds (
