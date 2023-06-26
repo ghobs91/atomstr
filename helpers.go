@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/hashicorp/logutils"
 	"github.com/nbd-wtf/go-nostr"
 )
 
@@ -60,4 +61,13 @@ func generateKeysForUrl(feedUrl string) *feedStruct {
 	feedElem.Pub, _ = nostr.GetPublicKey(feedElem.Sec)
 
 	return &feedElem
+}
+
+func logger() {
+	filter := &logutils.LevelFilter{
+		Levels:   []logutils.LogLevel{"DEBUG", "INFO", "WARN", "ERROR", "FATAL"},
+		MinLevel: logutils.LogLevel(logLevel),
+		Writer:   os.Stderr,
+	}
+	log.SetOutput(filter)
 }

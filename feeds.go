@@ -54,7 +54,7 @@ func nostrUpdateFeedMetadata(feedItem *feedStruct) {
 	}
 	ev.ID = string(ev.Serialize())
 	ev.Sign(feedItem.Sec)
-	log.Println("[INFO] Updating feed metadata for " + feedItem.Title)
+	log.Println("[DEBUG] Updating feed metadata for", feedItem.Title)
 
 	nostrPostItem(ev)
 }
@@ -65,6 +65,10 @@ func nostrUpdateAllFeedsMetadata(db *sql.DB) {
 	log.Println("[INFO] Updating feeds metadata")
 	for _, feedItem := range *feeds {
 		data := checkValidFeedSource(feedItem.Url)
+		if data.Title == "" {
+			log.Println("[ERROR] error updating feed")
+			continue
+		}
 		feedItem.Title = data.Title
 		feedItem.Description = data.Description
 		feedItem.Link = data.Link
@@ -78,19 +82,23 @@ func processFeedUrl(feedItem *feedStruct) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // fetch feeds with 10s timeout
 	defer cancel()
 	fp := gofeed.NewParser()
-	feed, _ := fp.ParseURLWithContext(feedItem.Url, ctx)
-	feedItem.Title = feed.Title
-	feedItem.Description = feed.Description
-	feedItem.Link = feed.Link
-	if feed.Image != nil {
-		feedItem.Image = feed.Image.URL
+	feed, err := fp.ParseURLWithContext(feedItem.Url, ctx)
+	if err != nil {
+		log.Println("[ERROR] Can't update feed")
 	} else {
-		feedItem.Image = defaultFeedImage
-	}
-	//feedItem.Image = feed.Image
+		feedItem.Title = feed.Title
+		feedItem.Description = feed.Description
+		feedItem.Link = feed.Link
+		if feed.Image != nil {
+			feedItem.Image = feed.Image.URL
+		} else {
+			feedItem.Image = defaultFeedImage
+		}
+		//feedItem.Image = feed.Image
 
-	for i := range feed.Items {
-		processFeedPost(feedItem, feed.Items[i])
+		for i := range feed.Items {
+			processFeedPost(feedItem, feed.Items[i])
+		}
 	}
 }
 
@@ -141,7 +149,7 @@ func nostrPostItem(ev nostr.Event) {
 			continue
 		}
 
-		log.Printf("[INFO] Event published to %s\n", url)
+		log.Printf("[DEBUG] Event published to %s\n", url)
 	}
 }
 
@@ -152,7 +160,7 @@ func dbWriteFeed(db *sql.DB, feedItem *feedStruct) bool {
 		log.Fatal(err)
 	}
 	nip19Pub, _ := nip19.EncodePublicKey(feedItem.Pub)
-	log.Println("[INFO] Added feed " + feedItem.Url + "with public key " + nip19Pub)
+	log.Println("[INFO] Added feed " + feedItem.Url + " with public key " + nip19Pub)
 	return true
 }
 
@@ -170,7 +178,7 @@ func dbGetFeed(db *sql.DB, feedUrl string) *feedStruct {
 }
 
 func checkValidFeedSource(feedUrl string) *feedStruct {
-	log.Println("[INFO] Trying to find feed at " + feedUrl)
+	log.Println("[DEBUG] Trying to find feed at", feedUrl)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	fp := gofeed.NewParser()
@@ -179,7 +187,7 @@ func checkValidFeedSource(feedUrl string) *feedStruct {
 	if err != nil {
 		log.Println("[ERROR] Not a valid feed source")
 	}
-
+	// FIXME! That needs proper error handling.
 	feedItem := feedStruct{}
 	feedItem.Title = feed.Title
 	feedItem.Description = feed.Description
@@ -197,7 +205,7 @@ func addSource(db *sql.DB, feedUrl string) *feedStruct {
 	//var feedElem2 *feedStruct
 	feedItem := checkValidFeedSource(feedUrl)
 	if feedItem.Title == "" {
-		log.Println("[ERROR] No valid feed found on " + feedUrl)
+		log.Println("[ERROR] No valid feed found on", feedUrl)
 		log.Fatal("nope")
 	}
 

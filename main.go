@@ -20,7 +20,7 @@ func processFeeds(db *sql.DB) {
 	}
 	//fmt.Println(feeds)
 	log.Println("[INFO] Updating feeds")
-	for _, feedItem := range *feeds {
+	for _, feedItem := range *feeds { // FIXME: error handling
 		processFeedUrl(&feedItem)
 	}
 	log.Println("[INFO] Finished updating feeds")
@@ -28,6 +28,7 @@ func processFeeds(db *sql.DB) {
 
 func main() {
 	db := dbInit()
+	logger()
 
 	feedNew := flag.String("a", "", "Add a new URL to scrape")
 	flag.Bool("l", false, "List all feeds with npubs")
@@ -48,6 +49,7 @@ func main() {
 
 		metadataTicker := time.NewTicker(metadataInterval)
 		updateTicker := time.NewTicker(fetchInterval)
+
 		cancelChan := make(chan os.Signal, 1)
 		// catch SIGETRM or SIGINTERRUPT
 		signal.Notify(cancelChan, syscall.SIGTERM, syscall.SIGINT)

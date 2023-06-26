@@ -6,7 +6,8 @@ import (
 
 var maxItemAge, _ = time.ParseDuration(getEnv("MAX_ITEM_AGE", "1h"))
 var fetchInterval, _ = time.ParseDuration(getEnv("FETCH_INTERVAL", "15m"))
-var metadataInterval, _ = time.ParseDuration(getEnv("METADATA_INTERVAL", "1h"))
+var metadataInterval, _ = time.ParseDuration(getEnv("METADATA_INTERVAL", "2h"))
+var logLevel = getEnv("LOG_LEVEL", "INFO")
 var atomstrversion string = "0.1"
 var relaysToPublishTo = []string{"wss://nostr.data.haus"}
 
