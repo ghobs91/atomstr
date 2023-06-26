@@ -4,10 +4,11 @@ import (
 	"time"
 )
 
-var maxItemAgeHours time.Duration = 1
-var fetchIntervalMinutes time.Duration = 15
+var maxItemAge, _ = time.ParseDuration(getEnv("MAX_ITEM_AGE", "1h"))
+var fetchInterval, _ = time.ParseDuration(getEnv("FETCH_INTERVAL", "15m"))
+var metadataInterval, _ = time.ParseDuration(getEnv("METADATA_INTERVAL", "1h"))
 var atomstrversion string = "0.1"
-var relaysToPublishTo = [...]string{"wss://nostr.data.haus"}
+var relaysToPublishTo = []string{"wss://nostr.data.haus"}
 
 const (
 	dbPath           = "./atomstr.db"

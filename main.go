@@ -4,6 +4,9 @@ import (
 	"database/sql"
 	"flag"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -12,7 +15,7 @@ import (
 func processFeeds(db *sql.DB) {
 	feeds := dbGetAllFeeds(db)
 	if len(*feeds) == 0 {
-		log.Println("[INFO] No feeds found")
+		log.Println("[WARN] No feeds found")
 		log.Fatal("no feeds")
 	}
 	//fmt.Println(feeds)
@@ -37,26 +40,37 @@ func main() {
 	} else if flagset["l"] {
 		listFeeds(db)
 	} else {
+		//fmt.Println(fetchInterval)
+		//os.Exit(1)
 		// first run
 		nostrUpdateAllFeedsMetadata(db)
 		processFeeds(db)
 
-		metadataTicker := time.NewTicker(time.Hour * 1)
-		updateTicker := time.NewTicker(time.Minute * fetchIntervalMinutes)
+		metadataTicker := time.NewTicker(metadataInterval)
+		updateTicker := time.NewTicker(fetchInterval)
+		cancelChan := make(chan os.Signal, 1)
+		// catch SIGETRM or SIGINTERRUPT
+		signal.Notify(cancelChan, syscall.SIGTERM, syscall.SIGINT)
 
-		for {
-			select {
-			case <-metadataTicker.C:
-				nostrUpdateAllFeedsMetadata(db)
-			case <-updateTicker.C:
-				processFeeds(db)
+		go func() {
+			for {
+				select {
+				case <-metadataTicker.C:
+					nostrUpdateAllFeedsMetadata(db)
+				case <-updateTicker.C:
+					processFeeds(db)
+				}
 			}
-		}
+		}()
+		sig := <-cancelChan
+
+		log.Println("[DEBUG] Caught signal %v", sig)
+		metadataTicker.Stop()
+		updateTicker.Stop()
+		log.Println("[INFO] Closing DB")
+		db.Close()
+		log.Println("[INFO] Shutting down")
 
 	}
-
-	log.Println("[INFO] Closing DB")
-	db.Close()
-	log.Println("[INFO] Shutting down")
 
 }

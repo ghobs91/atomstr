@@ -1,7 +1,9 @@
 # mucho mucho
 
-* ENVs
+* use environment variables to configure
 * Webpage
 * error handling
 * formatting
-
+* maybe waitgroups?
+* log handling
+* provide Dockerfile

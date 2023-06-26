@@ -9,12 +9,11 @@ import (
 	"github.com/nbd-wtf/go-nostr"
 )
 
-func checkEnv(key, defValue string) string {
-	val, ok := os.LookupEnv(key)
-	if !ok {
-		return defValue
+func getEnv(key, fallback string) string {
+	if val, ok := os.LookupEnv(key); ok {
+		return val
 	}
-	return val
+	return fallback
 }
 
 func convertTimeString(itemTime string) *time.Time {
@@ -27,7 +26,7 @@ func convertTimeString(itemTime string) *time.Time {
 }
 
 func checkMaxAge(itemTime string, maxAgeHours time.Duration) bool {
-	maxAge := time.Now().Add(-maxItemAgeHours * time.Hour)
+	maxAge := time.Now().Add(-maxItemAge)
 
 	postTime := convertTimeString(itemTime)
 

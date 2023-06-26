@@ -38,7 +38,7 @@ func nostrUpdateFeedMetadata(feedItem *feedStruct) {
 	//fmt.Println(feedItem)
 
 	metadata := map[string]string{
-		"name":    feedItem.Title + " (datahaus testing RSS Feed)",
+		"name":    feedItem.Title + " (RSS Feed)",
 		"about":   feedItem.Description + "\n\n" + feedItem.Link,
 		"picture": feedItem.Image,
 	}
@@ -98,7 +98,7 @@ func processFeedPost(feedItem *feedStruct, feedPost *gofeed.Item) {
 	// if time right, then push
 	p := bluemonday.StripTagsPolicy() // initialize html sanitizer
 
-	if checkMaxAge(feedPost.Published, maxItemAgeHours) {
+	if checkMaxAge(feedPost.Published, maxItemAge) {
 		feedText := feedPost.Title + "\n\n" + p.Sanitize(feedPost.Description)
 		if feedPost.Link != "" {
 			feedText = feedText + "\n\n" + feedPost.Link
