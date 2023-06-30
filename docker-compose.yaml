@@ -1,0 +1,33 @@
+version: "3.3"
+
+services:
+  atomstr:
+    image: mdebus/atomstr
+    container_name: atomstr
+    environment:
+      FETCH_INTERVAL: 15m
+      METADATA_INTERVAL: 2h
+      WEBSERVER_PORT: 8061
+      NIP05_DOMAIN: atomstr.data.haus
+      DEFAULT_PROFILE_PICTURE_URL: https://void.cat/d/NDrSDe4QMx9jh6bD9LJwcK
+      RELAYS_TO_PUBLISH_TO: wss://nostr.data.haus
+      LOG_LEVEL: DEBUG
+    networks:
+      - proxy
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - ./db:/db:Z
+    restart: "always"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.atomstr.entrypoints=websecure"
+      - "traefik.http.routers.atomstr.rule=(Host(`atomstr.data.haus`))"
+      - "traefik.http.routers.atomstr.tls.certresolver=leresolver"
+      - "traefik.http.routers.atomstr.middlewares=default"
+      - "traefik.http.routers.atomstr.service=atomstr"
+      - "traefik.http.services.atomstr.loadbalancer.server.port=8061"
+networks:
+  proxy:
+    external: true

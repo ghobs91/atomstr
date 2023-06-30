@@ -87,6 +87,7 @@ func processFeedUrl(feedItem *feedStruct) {
 		log.Println("[ERROR] Can't update feed")
 	} else {
 		log.Println("[DEBUG] Updating feed ", feedItem.Url)
+		//fmt.Println(feed)
 		feedItem.Title = feed.Title
 		feedItem.Description = feed.Description
 		feedItem.Link = feed.Link
@@ -108,17 +109,18 @@ func processFeedPost(feedItem *feedStruct, feedPost *gofeed.Item) {
 	// if time right, then push
 	p := bluemonday.StripTagsPolicy() // initialize html sanitizer
 
-	//fmt.Println(feedPost.Published)
-	if checkMaxAge(feedPost.Published, fetchInterval) {
+	//fmt.Println(feedPost.PublishedParsed)
+	if checkMaxAge(feedPost.PublishedParsed, fetchInterval) {
 		feedText := feedPost.Title + "\n\n" + p.Sanitize(feedPost.Description)
+		//feedText := feedPost.Title + "\n\n" + feedPost.Description
 		if feedPost.Link != "" {
 			feedText = feedText + "\n\n" + feedPost.Link
 		}
-		postTime := convertTimeString(feedPost.Published)
+		//postTime := convertTimeString(feedPost.PublishedParsed)
 
 		ev := nostr.Event{
 			PubKey:    feedItem.Pub,
-			CreatedAt: nostr.Timestamp(postTime.Unix()),
+			CreatedAt: nostr.Timestamp(feedPost.PublishedParsed.Unix()),
 			Kind:      nostr.KindTextNote,
 			Tags:      nil,
 			Content:   feedText,

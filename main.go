@@ -15,7 +15,7 @@ func (a *Atomstr) processFeeds() {
 	feeds := a.dbGetAllFeeds()
 	if len(*feeds) == 0 {
 		log.Println("[WARN] No feeds found")
-		log.Fatal("no feeds")
+		//log.Fatal("no feeds")
 	}
 	//fmt.Println(feeds)
 	log.Println("[INFO] Updating feeds")

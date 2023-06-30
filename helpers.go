@@ -19,6 +19,7 @@ func getEnv(key, fallback string) string {
 
 func convertTimeString(itemTime string) *time.Time {
 	// find right date format
+
 	postTime, err := time.Parse(time.RFC3339, itemTime)
 	if err != nil {
 		postTime, err = time.Parse(time.RFC1123Z, itemTime) // try other one
@@ -32,12 +33,12 @@ func convertTimeString(itemTime string) *time.Time {
 	return &postTime
 }
 
-func checkMaxAge(itemTime string, maxAgeHours time.Duration) bool {
+func checkMaxAge(itemTime *time.Time, maxAgeHours time.Duration) bool {
 	maxAge := time.Now().Add(-fetchInterval)
 
-	postTime := convertTimeString(itemTime)
+	//postTime := convertTimeString(itemTime)
 
-	if postTime.After(maxAge) {
+	if itemTime.After(maxAge) {
 		return true
 	}
 	return false
