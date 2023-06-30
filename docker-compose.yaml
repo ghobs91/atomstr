@@ -17,7 +17,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
-      - ./db:/db:Z
+      - ./atomstr.db:/atomstr.db:Z
     restart: "always"
     labels:
       - "traefik.enable=true"

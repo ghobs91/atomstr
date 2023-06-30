@@ -19,7 +19,7 @@ FROM alpine:latest
 LABEL org.opencontainers.image.title="atomstr"
 LABEL org.opencontainers.image.source=https://sr.ht/~psic4t/atromstr
 LABEL org.opencontainers.image.description="Atomstr scrapes RSS or Atom feeds and posts them into Nostr"
-LABEL org.opencontainers.image.authors="Raúl Piracés"
+LABEL org.opencontainers.image.authors="psic4t"
 LABEL org.opencontainers.image.licenses=GPL
 
 ENV FETCH_INTERVAL="15m"
@@ -30,5 +30,6 @@ ENV DB_DIR="/db/rsslay.sqlite"
 ENV DEFAULT_PROFILE_PICTURE_URL="https://i.imgur.com/MaceU96.png"
 
 COPY --from=build /atomstr .
+COPY --from=build /app/templates/ ./templates/
 
 CMD [ "/atomstr" ]

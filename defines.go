@@ -9,7 +9,7 @@ var fetchInterval, _ = time.ParseDuration(getEnv("FETCH_INTERVAL", "15m"))
 var metadataInterval, _ = time.ParseDuration(getEnv("METADATA_INTERVAL", "2h"))
 var logLevel = getEnv("LOG_LEVEL", "INFO")
 var webserverPort = getEnv("WEBSERVER_PORT", "8081")
-var nip05Domain = getEnv("NIP05_DOMAIN", "atomstr.domain.com")
+var nip05Domain = getEnv("NIP05_DOMAIN", "atomstr.data.haus")
 var atomstrversion string = "0.1"
 var relaysToPublishTo = []string{"wss://nostr.data.haus"}
 

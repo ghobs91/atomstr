@@ -41,6 +41,7 @@ func nostrUpdateFeedMetadata(feedItem *feedStruct) {
 		"name":    feedItem.Title + " (RSS Feed)",
 		"about":   feedItem.Description + "\n\n" + feedItem.Link,
 		"picture": feedItem.Image,
+		"nip05":   feedItem.Url + "@" + nip05Domain, // should this be optional?
 	}
 
 	content, _ := json.Marshal(metadata)
@@ -84,7 +85,7 @@ func processFeedUrl(feedItem *feedStruct) {
 	fp := gofeed.NewParser()
 	feed, err := fp.ParseURLWithContext(feedItem.Url, ctx)
 	if err != nil {
-		log.Println("[ERROR] Can't update feed")
+		log.Println("[ERROR] Can't update feed", feedItem.Url)
 	} else {
 		log.Println("[DEBUG] Updating feed ", feedItem.Url)
 		//fmt.Println(feed)
