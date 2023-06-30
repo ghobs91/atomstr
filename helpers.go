@@ -23,11 +23,17 @@ func convertTimeString(itemTime string) *time.Time {
 	if err != nil {
 		postTime, err = time.Parse(time.RFC1123Z, itemTime) // try other one
 	}
+	if err != nil {
+		postTime, err = time.Parse(time.RFC1123, itemTime) // try other one
+	}
+	if err != nil {
+		log.Println("[WARN] Can't parse element time")
+	}
 	return &postTime
 }
 
 func checkMaxAge(itemTime string, maxAgeHours time.Duration) bool {
-	maxAge := time.Now().Add(-maxItemAge)
+	maxAge := time.Now().Add(-fetchInterval)
 
 	postTime := convertTimeString(itemTime)
 

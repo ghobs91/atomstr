@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -14,9 +13,9 @@ import (
 	"github.com/nbd-wtf/go-nostr/nip19"
 )
 
-func dbGetAllFeeds(db *sql.DB) *[]feedStruct {
+func (a *Atomstr) dbGetAllFeeds() *[]feedStruct {
 	sqlStatement := `SELECT pub, sec, url FROM feeds`
-	rows, err := db.Query(sqlStatement)
+	rows, err := a.db.Query(sqlStatement)
 	if err != nil {
 		log.Fatal("[ERROR] Returning feeds from DB failed")
 	}
@@ -28,6 +27,7 @@ func dbGetAllFeeds(db *sql.DB) *[]feedStruct {
 		if err := rows.Scan(&feedItem.Pub, &feedItem.Sec, &feedItem.Url); err != nil {
 			log.Fatal("[ERROR] Scanning for feeds failed")
 		}
+		feedItem.Npub, _ = nip19.EncodePublicKey(feedItem.Pub)
 		feedItems = append(feedItems, feedItem)
 	}
 
@@ -59,8 +59,8 @@ func nostrUpdateFeedMetadata(feedItem *feedStruct) {
 	nostrPostItem(ev)
 }
 
-func nostrUpdateAllFeedsMetadata(db *sql.DB) {
-	feeds := dbGetAllFeeds(db)
+func (a *Atomstr) nostrUpdateAllFeedsMetadata() {
+	feeds := a.dbGetAllFeeds()
 
 	log.Println("[INFO] Updating feeds metadata")
 	for _, feedItem := range *feeds {
@@ -86,6 +86,7 @@ func processFeedUrl(feedItem *feedStruct) {
 	if err != nil {
 		log.Println("[ERROR] Can't update feed")
 	} else {
+		log.Println("[DEBUG] Updating feed ", feedItem.Url)
 		feedItem.Title = feed.Title
 		feedItem.Description = feed.Description
 		feedItem.Link = feed.Link
@@ -99,6 +100,7 @@ func processFeedUrl(feedItem *feedStruct) {
 		for i := range feed.Items {
 			processFeedPost(feedItem, feed.Items[i])
 		}
+		log.Println("[DEBUG] Finished updating feed ", feedItem.Url)
 	}
 }
 
@@ -106,7 +108,8 @@ func processFeedPost(feedItem *feedStruct, feedPost *gofeed.Item) {
 	// if time right, then push
 	p := bluemonday.StripTagsPolicy() // initialize html sanitizer
 
-	if checkMaxAge(feedPost.Published, maxItemAge) {
+	//fmt.Println(feedPost.Published)
+	if checkMaxAge(feedPost.Published, fetchInterval) {
 		feedText := feedPost.Title + "\n\n" + p.Sanitize(feedPost.Description)
 		if feedPost.Link != "" {
 			feedText = feedText + "\n\n" + feedPost.Link
@@ -153,8 +156,8 @@ func nostrPostItem(ev nostr.Event) {
 	}
 }
 
-func dbWriteFeed(db *sql.DB, feedItem *feedStruct) bool {
-	_, err := db.Exec(`insert into feeds (pub, sec, url) values(?, ?, ?)`, feedItem.Pub, feedItem.Sec, feedItem.Url)
+func (a *Atomstr) dbWriteFeed(feedItem *feedStruct) bool {
+	_, err := a.db.Exec(`insert into feeds (pub, sec, url) values(?, ?, ?)`, feedItem.Pub, feedItem.Sec, feedItem.Url)
 	if err != nil {
 		fmt.Println("[ERROR] Can't add feed!")
 		log.Fatal(err)
@@ -164,9 +167,9 @@ func dbWriteFeed(db *sql.DB, feedItem *feedStruct) bool {
 	return true
 }
 
-func dbGetFeed(db *sql.DB, feedUrl string) *feedStruct {
+func (a *Atomstr) dbGetFeed(feedUrl string) *feedStruct {
 	sqlStatement := `SELECT pub, sec, url FROM feeds WHERE url=$1;`
-	row := db.QueryRow(sqlStatement, feedUrl)
+	row := a.db.QueryRow(sqlStatement, feedUrl)
 
 	feedItem := feedStruct{}
 	err := row.Scan(&feedItem.Pub, &feedItem.Sec, &feedItem.Url)
@@ -201,7 +204,7 @@ func checkValidFeedSource(feedUrl string) *feedStruct {
 	return &feedItem
 }
 
-func addSource(db *sql.DB, feedUrl string) *feedStruct {
+func (a *Atomstr) addSource(feedUrl string) *feedStruct {
 	//var feedElem2 *feedStruct
 	feedItem := checkValidFeedSource(feedUrl)
 	if feedItem.Title == "" {
@@ -210,7 +213,7 @@ func addSource(db *sql.DB, feedUrl string) *feedStruct {
 	}
 
 	// check for existing feed
-	feedTest := dbGetFeed(db, feedUrl)
+	feedTest := a.dbGetFeed(feedUrl)
 	if feedTest.Url != "" {
 		log.Println("[WARN] Feed already exists")
 		log.Fatal()
@@ -218,13 +221,30 @@ func addSource(db *sql.DB, feedUrl string) *feedStruct {
 
 	feedItem = generateKeysForUrl(feedUrl)
 
-	dbWriteFeed(db, feedItem)
+	a.dbWriteFeed(feedItem)
 
 	return feedItem
 }
+func (a *Atomstr) deleteSource(feedUrl string) bool {
+	// check for existing feed
+	feedTest := a.dbGetFeed(feedUrl)
+	if feedTest.Url != "" {
+		sqlStatement := `DELETE FROM feeds WHERE url=$1;`
+		_, err := a.db.Exec(sqlStatement, feedUrl)
+		if err != nil {
+			log.Println("[WARN] Can't remove Feed")
+			log.Fatal(err)
+		}
+		log.Println("[INFO] Feed removed")
+		return true
+	} else {
+		log.Println("[WARN] Feed not found")
+		return false
+	}
+}
 
-func listFeeds(db *sql.DB) {
-	feeds := dbGetAllFeeds(db)
+func (a *Atomstr) listFeeds() {
+	feeds := a.dbGetAllFeeds()
 
 	for _, feedItem := range *feeds {
 		nip19Pub, _ := nip19.EncodePublicKey(feedItem.Pub)

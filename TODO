@@ -5,5 +5,5 @@
 * error handling!
 * formatting
 * maybe waitgroups?
-* log handling
 * provide Dockerfile
+* categories as tags
