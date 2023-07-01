@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -34,51 +33,6 @@ func (a *Atomstr) dbGetAllFeeds() *[]feedStruct {
 	return &feedItems
 }
 
-func nostrUpdateFeedMetadata(feedItem *feedStruct) {
-	//fmt.Println(feedItem)
-
-	metadata := map[string]string{
-		"name":    feedItem.Title + " (RSS Feed)",
-		"about":   feedItem.Description + "\n\n" + feedItem.Link,
-		"picture": feedItem.Image,
-		"nip05":   feedItem.Url + "@" + nip05Domain, // should this be optional?
-	}
-
-	content, _ := json.Marshal(metadata)
-
-	ev := nostr.Event{
-		PubKey:    feedItem.Pub,
-		CreatedAt: nostr.Now(),
-		Kind:      nostr.KindSetMetadata,
-		Tags:      nostr.Tags{},
-		Content:   string(content),
-	}
-	ev.ID = string(ev.Serialize())
-	ev.Sign(feedItem.Sec)
-	log.Println("[DEBUG] Updating feed metadata for", feedItem.Title)
-
-	nostrPostItem(ev)
-}
-
-func (a *Atomstr) nostrUpdateAllFeedsMetadata() {
-	feeds := a.dbGetAllFeeds()
-
-	log.Println("[INFO] Updating feeds metadata")
-	for _, feedItem := range *feeds {
-		data := checkValidFeedSource(feedItem.Url)
-		if data.Title == "" {
-			log.Println("[ERROR] error updating feed")
-			continue
-		}
-		feedItem.Title = data.Title
-		feedItem.Description = data.Description
-		feedItem.Link = data.Link
-		feedItem.Image = data.Image
-		nostrUpdateFeedMetadata(&feedItem)
-	}
-	log.Println("[INFO] Finished updating feeds metadata")
-}
-
 func processFeedUrl(feedItem *feedStruct) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // fetch feeds with 10s timeout
 	defer cancel()
@@ -107,10 +61,10 @@ func processFeedUrl(feedItem *feedStruct) {
 }
 
 func processFeedPost(feedItem *feedStruct, feedPost *gofeed.Item) {
-	// if time right, then push
 	p := bluemonday.StripTagsPolicy() // initialize html sanitizer
 
 	//fmt.Println(feedPost.PublishedParsed)
+	// if time right, then push
 	if checkMaxAge(feedPost.PublishedParsed, fetchInterval) {
 		feedText := feedPost.Title + "\n\n" + p.Sanitize(feedPost.Description)
 		//feedText := feedPost.Title + "\n\n" + feedPost.Description
@@ -130,32 +84,6 @@ func processFeedPost(feedItem *feedStruct, feedPost *gofeed.Item) {
 		ev.Sign(feedItem.Sec)
 
 		nostrPostItem(ev)
-		/*
-			nip19Pub, _ := nip19.EncodePublicKey(feedItem.Pub)
-			fmt.Print(feedItem.Url + " ")
-			fmt.Print(nip19Pub + " ")
-			fmt.Println(postTime.Format(time.RFC3339) + "\n")
-		*/
-		//fmt.Println(feedText)
-	}
-}
-
-func nostrPostItem(ev nostr.Event) {
-	ctx := context.Background()
-	//for _, url := range []string{"wss://nostr.data.haus", "wss://nostr-pub.wellorder.net"} {
-	for _, url := range relaysToPublishTo {
-		relay, err := nostr.RelayConnect(ctx, url)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-		_, err = relay.Publish(ctx, ev)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-
-		log.Printf("[DEBUG] Event published to %s\n", url)
 	}
 }
 
@@ -183,18 +111,20 @@ func (a *Atomstr) dbGetFeed(feedUrl string) *feedStruct {
 	return &feedItem
 }
 
-func checkValidFeedSource(feedUrl string) *feedStruct {
+func checkValidFeedSource(feedUrl string) (*feedStruct, error) {
 	log.Println("[DEBUG] Trying to find feed at", feedUrl)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	fp := gofeed.NewParser()
 	feed, err := fp.ParseURLWithContext(feedUrl, ctx)
+	feedItem := feedStruct{}
 
 	if err != nil {
 		log.Println("[ERROR] Not a valid feed source")
+		return &feedItem, err
 	}
 	// FIXME! That needs proper error handling.
-	feedItem := feedStruct{}
+	feedItem.Url = feedUrl
 	feedItem.Title = feed.Title
 	feedItem.Description = feed.Description
 	feedItem.Link = feed.Link
@@ -204,27 +134,32 @@ func checkValidFeedSource(feedUrl string) *feedStruct {
 		feedItem.Image = defaultFeedImage
 	}
 
-	return &feedItem
+	return &feedItem, err
 }
 
 func (a *Atomstr) addSource(feedUrl string) *feedStruct {
 	//var feedElem2 *feedStruct
-	feedItem := checkValidFeedSource(feedUrl)
-	if feedItem.Title == "" {
+	feedItem, err := checkValidFeedSource(feedUrl)
+	//if feedItem.Title == "" {
+	if err != nil {
 		log.Println("[ERROR] No valid feed found on", feedUrl)
-		log.Fatal("nope")
+		return feedItem
 	}
 
 	// check for existing feed
 	feedTest := a.dbGetFeed(feedUrl)
 	if feedTest.Url != "" {
 		log.Println("[WARN] Feed already exists")
-		log.Fatal()
+		return feedItem
 	}
 
-	feedItem = generateKeysForUrl(feedUrl)
+	feedItemKeys := generateKeysForUrl(feedUrl)
+	feedItem.Pub = feedItemKeys.Pub
+	feedItem.Sec = feedItemKeys.Sec
+	fmt.Println(feedItem)
 
 	a.dbWriteFeed(feedItem)
+	nostrUpdateFeedMetadata(feedItem)
 
 	return feedItem
 }

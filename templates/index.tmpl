@@ -1,0 +1,36 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-type" content="text/html;charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="stylesheet" href="/static/main.css" type="text/css" />
+<title>atomstr</title></head><body>
+<div id="title"><h1><a class="title" href="/">atomstr</a></h1></div>
+<p>RSS/Atom gateway to Nostr. Currently posting to wss://nostr.data.haus</p>
+
+<h2>Add a new feed</h2>
+
+<form class="addfeed" action="/add" method="POST">
+<input class="input" name="url" type="url" placeholder="https://example.com/feed">
+<input type="submit">
+</form>
+
+<br />
+<h2>Current feeds</h2>
+<table>
+	<tbody>
+	<th>URL</th>
+	<th>Open in</th>
+	{{range .}}
+		<tr>
+			<td>{{.Url}}</td>
+			<td>
+				<a href=https://snort.social/p/{{.Npub}}>Snort</a>
+				<a href=https://iris.to/{{.Npub}}>Iris</a>
+				<a href=nostr:{{.Npub}}>Native</a>
+			</td>
+
+		</tr>
+	{{end}}
+	</tbody>
+</table>
+
+</body>
+</html>

@@ -7,6 +7,7 @@ COPY go.sum ./
 RUN go mod download
 
 COPY *.go ./
+COPY static/ ./static/
 COPY templates/ ./templates/
 
 RUN apk add --no-cache build-base
@@ -30,6 +31,7 @@ ENV DB_DIR="/db/rsslay.sqlite"
 ENV DEFAULT_PROFILE_PICTURE_URL="https://i.imgur.com/MaceU96.png"
 
 COPY --from=build /atomstr .
+COPY --from=build /app/static/ ./static/
 COPY --from=build /app/templates/ ./templates/
 
 CMD [ "/atomstr" ]
