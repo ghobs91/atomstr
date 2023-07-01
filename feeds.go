@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/microcosm-cc/bluemonday"
@@ -33,31 +34,35 @@ func (a *Atomstr) dbGetAllFeeds() *[]feedStruct {
 	return &feedItems
 }
 
-func processFeedUrl(feedItem *feedStruct) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // fetch feeds with 10s timeout
-	defer cancel()
-	fp := gofeed.NewParser()
-	feed, err := fp.ParseURLWithContext(feedItem.Url, ctx)
-	if err != nil {
-		log.Println("[ERROR] Can't update feed", feedItem.Url)
-	} else {
-		log.Println("[DEBUG] Updating feed ", feedItem.Url)
-		//fmt.Println(feed)
-		feedItem.Title = feed.Title
-		feedItem.Description = feed.Description
-		feedItem.Link = feed.Link
-		if feed.Image != nil {
-			feedItem.Image = feed.Image.URL
+// func processFeedUrl(ch chan string, wg *sync.WaitGroup, feedItem *feedStruct) {
+func processFeedUrl(ch chan *feedStruct, wg *sync.WaitGroup) {
+	for feedItem := range ch {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // fetch feeds with 10s timeout
+		defer cancel()
+		fp := gofeed.NewParser()
+		feed, err := fp.ParseURLWithContext(feedItem.Url, ctx)
+		if err != nil {
+			log.Println("[ERROR] Can't update feed", feedItem.Url)
 		} else {
-			feedItem.Image = defaultFeedImage
-		}
-		//feedItem.Image = feed.Image
+			log.Println("[DEBUG] Updating feed ", feedItem.Url)
+			//fmt.Println(feed)
+			feedItem.Title = feed.Title
+			feedItem.Description = feed.Description
+			feedItem.Link = feed.Link
+			if feed.Image != nil {
+				feedItem.Image = feed.Image.URL
+			} else {
+				feedItem.Image = defaultFeedImage
+			}
+			//feedItem.Image = feed.Image
 
-		for i := range feed.Items {
-			processFeedPost(feedItem, feed.Items[i])
+			for i := range feed.Items {
+				processFeedPost(feedItem, feed.Items[i])
+			}
+			log.Println("[DEBUG] Finished updating feed ", feedItem.Url)
 		}
-		log.Println("[DEBUG] Finished updating feed ", feedItem.Url)
 	}
+	wg.Done()
 }
 
 func processFeedPost(feedItem *feedStruct, feedPost *gofeed.Item) {

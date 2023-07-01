@@ -28,7 +28,6 @@ ENV METADATA_INTERVAL="2h"
 ENV LOG_LEVEL="INFO"
 ENV WEBSERVER_PORT="8061"
 ENV DB_DIR="/db/rsslay.sqlite"
-ENV DEFAULT_PROFILE_PICTURE_URL="https://i.imgur.com/MaceU96.png"
 
 COPY --from=build /atomstr .
 COPY --from=build /app/static/ ./static/

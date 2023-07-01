@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -19,9 +20,33 @@ func (a *Atomstr) processFeeds() {
 	}
 	//fmt.Println(feeds)
 	log.Println("[INFO] Updating feeds")
-	for _, feedItem := range *feeds { // FIXME: error handling
-		processFeedUrl(&feedItem)
+	/*
+		for _, feedItem := range *feeds { // FIXME: error handling
+			processFeedUrl(&feedItem)
+		}*/
+
+	// create a channel for work "tasks"
+	ch := make(chan *feedStruct)
+
+	wg := sync.WaitGroup{}
+
+	// start the workers
+	for t := 0; t < maxWorkers; t++ {
+		wg.Add(1)
+		go processFeedUrl(ch, &wg)
 	}
+
+	// push the lines to the queue channel for processing
+	for _, feedItem := range *feeds {
+		ch <- &feedItem
+	}
+
+	// this will cause the workers to stop and exit their receive loop
+	close(ch)
+
+	// make sure they all exit
+	wg.Wait()
+
 	log.Println("[INFO] Finished updating feeds")
 }
 

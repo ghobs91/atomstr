@@ -7,6 +7,7 @@ services:
     environment:
       FETCH_INTERVAL: 15m
       METADATA_INTERVAL: 2h
+      MAX_WORKERS: 5
       WEBSERVER_PORT: 8061
       NIP05_DOMAIN: atomstr.data.haus
       DEFAULT_PROFILE_PICTURE_URL: https://void.cat/d/NDrSDe4QMx9jh6bD9LJwcK
