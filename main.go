@@ -26,7 +26,7 @@ func (a *Atomstr) processFeeds() {
 		}*/
 
 	// create a channel for work "tasks"
-	ch := make(chan *feedStruct)
+	ch := make(chan feedStruct)
 
 	wg := sync.WaitGroup{}
 
@@ -38,7 +38,7 @@ func (a *Atomstr) processFeeds() {
 
 	// push the lines to the queue channel for processing
 	for _, feedItem := range *feeds {
-		ch <- &feedItem
+		ch <- feedItem
 	}
 
 	// this will cause the workers to stop and exit their receive loop
@@ -73,6 +73,7 @@ func main() {
 		//fmt.Println(fetchInterval)
 		//os.Exit(1)
 		go a.webserver()
+
 		// first run
 		a.nostrUpdateAllFeedsMetadata()
 		a.processFeeds()

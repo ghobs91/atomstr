@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"github.com/nbd-wtf/go-nostr"
@@ -61,12 +60,12 @@ func nostrPostItem(ev nostr.Event) {
 	for _, url := range relaysToPublishTo {
 		relay, err := nostr.RelayConnect(ctx, url)
 		if err != nil {
-			fmt.Println(err)
+			log.Println("[ERROR]", err)
 			continue
 		}
 		_, err = relay.Publish(ctx, ev)
 		if err != nil {
-			fmt.Println(err)
+			log.Println("[ERROR]", err)
 			continue
 		}
 

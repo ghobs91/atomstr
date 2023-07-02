@@ -35,7 +35,7 @@ func (a *Atomstr) dbGetAllFeeds() *[]feedStruct {
 }
 
 // func processFeedUrl(ch chan string, wg *sync.WaitGroup, feedItem *feedStruct) {
-func processFeedUrl(ch chan *feedStruct, wg *sync.WaitGroup) {
+func processFeedUrl(ch chan feedStruct, wg *sync.WaitGroup) {
 	for feedItem := range ch {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // fetch feeds with 10s timeout
 		defer cancel()
@@ -65,7 +65,7 @@ func processFeedUrl(ch chan *feedStruct, wg *sync.WaitGroup) {
 	wg.Done()
 }
 
-func processFeedPost(feedItem *feedStruct, feedPost *gofeed.Item) {
+func processFeedPost(feedItem feedStruct, feedPost *gofeed.Item) {
 	p := bluemonday.StripTagsPolicy() // initialize html sanitizer
 
 	//fmt.Println(feedPost.PublishedParsed)
@@ -161,7 +161,7 @@ func (a *Atomstr) addSource(feedUrl string) *feedStruct {
 	feedItemKeys := generateKeysForUrl(feedUrl)
 	feedItem.Pub = feedItemKeys.Pub
 	feedItem.Sec = feedItemKeys.Sec
-	fmt.Println(feedItem)
+	//fmt.Println(feedItem)
 
 	a.dbWriteFeed(feedItem)
 	nostrUpdateFeedMetadata(feedItem)
