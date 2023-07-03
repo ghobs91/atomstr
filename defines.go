@@ -12,13 +12,10 @@ var logLevel = getEnv("LOG_LEVEL", "INFO")
 var webserverPort = getEnv("WEBSERVER_PORT", "8081")
 var nip05Domain = getEnv("NIP05_DOMAIN", "atomstr.data.haus")
 var maxWorkers, _ = strconv.Atoi(getEnv("MAX_WORKERS", "5"))
-var atomstrversion string = "0.1"
 var relaysToPublishTo = []string{"wss://nostr.data.haus"}
-
-const (
-	dbPath           = "./atomstr.db"
-	defaultFeedImage = "https://void.cat/d/NDrSDe4QMx9jh6bD9LJwcK"
-)
+var defaultFeedImage = getEnv("DEFAULT_FEED_IMAGE", "https://void.cat/d/NDrSDe4QMx9jh6bD9LJwcK")
+var dbPath = getEnv("DB_PATH", "./atomstr.db")
+var atomstrversion string = "0.3"
 
 type Atomstr struct {
 	db *sql.DB
