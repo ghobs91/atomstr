@@ -16,7 +16,6 @@ func (a *Atomstr) processFeeds() {
 	feeds := a.dbGetAllFeeds()
 	if len(*feeds) == 0 {
 		log.Println("[WARN] No feeds found")
-		//log.Fatal("no feeds")
 	}
 	//fmt.Println(feeds)
 	log.Println("[INFO] Updating feeds")
@@ -70,8 +69,6 @@ func main() {
 	} else if flagset["d"] {
 		a.deleteSource(*feedDelete)
 	} else {
-		//fmt.Println(fetchInterval)
-		//os.Exit(1)
 		go a.webserver()
 
 		// first run
@@ -105,5 +102,4 @@ func main() {
 		log.Println("[INFO] Shutting down")
 
 	}
-
 }
