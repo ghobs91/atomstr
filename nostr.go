@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"sync"
 
 	"github.com/nbd-wtf/go-nostr"
 )
@@ -34,7 +35,23 @@ func nostrUpdateFeedMetadata(feedItem *feedStruct) {
 	nostrPostItem(ev)
 }
 
-func (a *Atomstr) nostrUpdateAllFeedsMetadata() {
+func (a *Atomstr) processFeedMetadata(ch chan feedStruct, wg *sync.WaitGroup) {
+	for feedItem := range ch {
+		data, err := checkValidFeedSource(feedItem.Url)
+		if err != nil {
+			log.Println("[ERROR] error updating feed")
+			continue
+		}
+		feedItem.Title = data.Title
+		feedItem.Description = data.Description
+		feedItem.Link = data.Link
+		feedItem.Image = data.Image
+		nostrUpdateFeedMetadata(&feedItem)
+	}
+	wg.Done()
+}
+
+func (a *Atomstr) ALTnostrUpdateAllFeedsMetadata() {
 	feeds := a.dbGetAllFeeds()
 
 	log.Println("[INFO] Updating feeds metadata")

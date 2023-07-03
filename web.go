@@ -12,7 +12,7 @@ import (
 )
 
 func (a *Atomstr) webMain(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.ParseFiles("web/index.tmpl"))
+	tmpl := template.Must(template.ParseFiles("templates/index.tmpl"))
 	feeds := a.dbGetAllFeeds()
 	tmpl.Execute(w, *feeds)
 }
@@ -56,7 +56,7 @@ func (a *Atomstr) webserver() {
 	http.HandleFunc("/", a.webMain)
 	http.HandleFunc("/add", a.webAdd)
 	http.HandleFunc("/.well-known/nostr.json", a.webNip05)
-	http.Handle("/web/", http.StripPrefix("/web/", http.FileServer(http.Dir("static"))))
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	log.Println("[INFO] Starting webserver at port", webserverPort)
 	log.Fatal(http.ListenAndServe(":"+webserverPort, nil))
 }

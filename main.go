@@ -12,27 +12,25 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func (a *Atomstr) processFeeds() {
+func (a *Atomstr) processFeeds(work string) {
 	feeds := a.dbGetAllFeeds()
 	if len(*feeds) == 0 {
 		log.Println("[WARN] No feeds found")
 	}
-	//fmt.Println(feeds)
 	log.Println("[INFO] Updating feeds")
-	/*
-		for _, feedItem := range *feeds { // FIXME: error handling
-			processFeedUrl(&feedItem)
-		}*/
 
-	// create a channel for work "tasks"
 	ch := make(chan feedStruct)
-
 	wg := sync.WaitGroup{}
 
 	// start the workers
 	for t := 0; t < maxWorkers; t++ {
 		wg.Add(1)
-		go processFeedUrl(ch, &wg)
+		switch work {
+		case "metadata":
+			go a.processFeedMetadata(ch, &wg)
+		default:
+			go processFeedUrl(ch, &wg)
+		}
 	}
 
 	// push the lines to the queue channel for processing
@@ -40,11 +38,8 @@ func (a *Atomstr) processFeeds() {
 		ch <- feedItem
 	}
 
-	// this will cause the workers to stop and exit their receive loop
-	close(ch)
-
-	// make sure they all exit
-	wg.Wait()
+	close(ch) // this will cause the workers to stop and exit their receive loop
+	wg.Wait() // make sure they all exit
 
 	log.Println("[INFO] Finished updating feeds")
 }
@@ -72,8 +67,10 @@ func main() {
 		go a.webserver()
 
 		// first run
-		a.nostrUpdateAllFeedsMetadata()
-		a.processFeeds()
+		//a.nostrUpdateAllFeedsMetadata()
+		//a.processFeeds()
+		a.processFeeds("metadata")
+		a.processFeeds("scrape")
 
 		metadataTicker := time.NewTicker(metadataInterval)
 		updateTicker := time.NewTicker(fetchInterval)
@@ -86,9 +83,10 @@ func main() {
 			for {
 				select {
 				case <-metadataTicker.C:
-					a.nostrUpdateAllFeedsMetadata()
+					//a.nostrUpdateAllFeedsMetadata()
+					a.processFeeds("metadata")
 				case <-updateTicker.C:
-					a.processFeeds()
+					a.processFeeds("scrape")
 				}
 			}
 		}()
