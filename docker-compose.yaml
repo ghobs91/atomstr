@@ -9,10 +9,10 @@ services:
       METADATA_INTERVAL: 2h
       MAX_WORKERS: 5
       WEBSERVER_PORT: 8061
-      NIP05_DOMAIN: atomstr.data.haus
+      NIP05_DOMAIN: atomstr.domain.com
       DEFAULT_PROFILE_PICTURE_URL: https://void.cat/d/NDrSDe4QMx9jh6bD9LJwcK
       RELAYS_TO_PUBLISH_TO: wss://nostr.data.haus
-      LOG_LEVEL: DEBUG
+      LOG_LEVEL: INFO 
     networks:
       - proxy
     volumes:
@@ -24,7 +24,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
       - "traefik.http.routers.atomstr.entrypoints=websecure"
-      - "traefik.http.routers.atomstr.rule=(Host(`atomstr.data.haus`))"
+      - "traefik.http.routers.atomstr.rule=(Host(`atomstr.domain.com`))"
       - "traefik.http.routers.atomstr.tls.certresolver=leresolver"
       - "traefik.http.routers.atomstr.middlewares=default"
       - "traefik.http.routers.atomstr.service=atomstr"

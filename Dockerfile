@@ -19,15 +19,9 @@ FROM alpine:latest
 
 LABEL org.opencontainers.image.title="atomstr"
 LABEL org.opencontainers.image.source=https://sr.ht/~psic4t/atromstr
-LABEL org.opencontainers.image.description="Atomstr scrapes RSS or Atom feeds and posts them into Nostr"
+LABEL org.opencontainers.image.description="Atomstr is a RSS/Atom gateway to Nostr"
 LABEL org.opencontainers.image.authors="psic4t"
 LABEL org.opencontainers.image.licenses=GPL
-
-ENV FETCH_INTERVAL="15m"
-ENV METADATA_INTERVAL="2h"
-ENV LOG_LEVEL="INFO"
-ENV WEBSERVER_PORT="8061"
-ENV DB_DIR="/db/rsslay.sqlite"
 
 COPY --from=build /atomstr .
 COPY --from=build /app/static/ ./static/
