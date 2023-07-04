@@ -6,7 +6,6 @@ atomstr: clean
 linux-arm:
 	GOOS=linux GOARCH=arm go build -o atomstr -ldflags="-s -w"
 
-
 clean:
 	rm -f atomstr
 

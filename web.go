@@ -2,34 +2,42 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"net/url"
 
 	"github.com/nbd-wtf/go-nostr/nip05"
+	"github.com/nbd-wtf/go-nostr/nip19"
 )
 
 func (a *Atomstr) webMain(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseFiles("templates/index.tmpl"))
 	feeds := a.dbGetAllFeeds()
-	tmpl.Execute(w, *feeds)
+	data := webIndex{
+		Relays: relaysToPublishTo,
+		Feeds:  *feeds,
+	}
+	tmpl.Execute(w, data)
 }
 
 func (a *Atomstr) webAdd(w http.ResponseWriter, r *http.Request) {
-	//tmpl := template.Must(template.ParseFiles("templates/index.tmpl"))
-	feedItem := a.addSource(r.FormValue("url"))
+	tmpl := template.Must(template.ParseFiles("templates/add.tmpl"))
+	feedItem, err := a.addSource(r.FormValue("url"))
 
-	if feedItem.Pub != "" {
-		fmt.Fprintln(w, "<h1>Success!</h1><p>Added feed "+r.FormValue("url")+" with public key "+feedItem.Pub+"</p>")
+	var status string
+	if err != nil {
+		status = "No feed found or feed already exists."
 	} else {
-		fmt.Fprintln(w, "<h1>No feed found or feed already exists.</h1>")
+		feedItem.Npub, _ = nip19.EncodePublicKey(feedItem.Pub)
+		status = "Success! Check your feed below and open it with your preferred app."
+	}
+	data := webAddFeed{
+		Status: status,
+		Feed:   *feedItem,
 	}
 
-	fmt.Fprintln(w, "<p><a href=..>Go back</a></p>")
-
-	//tmpl.Execute(w, *feeds)
+	tmpl.Execute(w, data)
 }
 
 func (a *Atomstr) webNip05(w http.ResponseWriter, r *http.Request) {

@@ -142,20 +142,20 @@ func checkValidFeedSource(feedUrl string) (*feedStruct, error) {
 	return &feedItem, err
 }
 
-func (a *Atomstr) addSource(feedUrl string) *feedStruct {
+func (a *Atomstr) addSource(feedUrl string) (*feedStruct, error) {
 	//var feedElem2 *feedStruct
 	feedItem, err := checkValidFeedSource(feedUrl)
 	//if feedItem.Title == "" {
 	if err != nil {
 		log.Println("[ERROR] No valid feed found on", feedUrl)
-		return feedItem
+		return feedItem, err
 	}
 
 	// check for existing feed
 	feedTest := a.dbGetFeed(feedUrl)
 	if feedTest.Url != "" {
 		log.Println("[WARN] Feed already exists")
-		return feedItem
+		return feedItem, err
 	}
 
 	feedItemKeys := generateKeysForUrl(feedUrl)
@@ -166,7 +166,7 @@ func (a *Atomstr) addSource(feedUrl string) *feedStruct {
 	a.dbWriteFeed(feedItem)
 	nostrUpdateFeedMetadata(feedItem)
 
-	return feedItem
+	return feedItem, err
 }
 func (a *Atomstr) deleteSource(feedUrl string) bool {
 	// check for existing feed

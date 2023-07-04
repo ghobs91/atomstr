@@ -3,10 +3,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="stylesheet" href="/static/main.css" type="text/css" />
 <title>atomstr</title></head><body>
 <div id="title"><h1><a class="title" href="/">atomstr</a></h1></div>
-<p>RSS/Atom gateway to Nostr. Currently posting to wss://nostr.data.haus</p>
+<p>RSS/Atom gateway to Nostr.</p>
+
+<p>Add at least one of the following relays to read the feeds:
+<ul>
+{{range .Relays}}
+	<li>{{.}}</li>
+{{end}}
+</ul>
+</p>
+<br />
 
 <h2>Add a new feed</h2>
-
 <form class="addfeed" action="/add" method="POST">
 <input class="input" name="url" type="url" placeholder="https://example.com/feed">
 <input type="submit">
@@ -18,7 +26,7 @@
 	<tbody>
 	<th>URL</th>
 	<th>Open in</th>
-	{{range .}}
+	{{range .Feeds}}
 		<tr>
 			<td>{{.Url}}</td>
 			<td>
@@ -31,6 +39,9 @@
 	{{end}}
 	</tbody>
 </table>
-
+<br />
+<br />
+<div id="footer">Released under GPL. <a href="https://git.sr.ht/~psic4t/atomstr">Code on Sourcehut</a> — CC by-nc-nd psic4t<br>
+</div>
 </body>
 </html>
