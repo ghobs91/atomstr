@@ -38,26 +38,18 @@ The following variables are available:
 
 ## CLI Usage
 
-Use with Docker:
-
-    docker exec -it atomstr ./atomstr -l
-
-Common options:
-
-    atomstr -h
-
 Add a feed:
 
-    atomstr -a https://my.feed.org/rss
+    docker exec -it atomstr ./atomstr -a https://my.feed.org/rss
 
 List all feeds:
 
-    atomstr -l
+    docker exec -it atomstr ./atomstr -l
 
 
 Delete a feed:
 
-    atomstr -d https://my.feed.org/rss
+    docker exec -it atomstr ./atomstr -d https://my.feed.org/rss
 
 
 ## About
