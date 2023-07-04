@@ -7,11 +7,11 @@ services:
     environment:
       FETCH_INTERVAL: 15m
       METADATA_INTERVAL: 2h
-      MAX_WORKERS: 5
       WEBSERVER_PORT: 8061
       NIP05_DOMAIN: atomstr.domain.com
       DEFAULT_PROFILE_PICTURE_URL: https://void.cat/d/NDrSDe4QMx9jh6bD9LJwcK
       RELAYS_TO_PUBLISH_TO: wss://nostr.data.haus
+      MAX_WORKERS: 5
       LOG_LEVEL: INFO 
     networks:
       - proxy
