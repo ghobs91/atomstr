@@ -18,7 +18,7 @@ func (a *Atomstr) webMain(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *Atomstr) webAdd(w http.ResponseWriter, r *http.Request) {
-	//tmpl := template.Must(template.ParseFiles("templates/add.tmpl"))
+	//tmpl := template.Must(template.ParseFiles("templates/index.tmpl"))
 	feedItem := a.addSource(r.FormValue("url"))
 
 	if feedItem.Pub != "" {

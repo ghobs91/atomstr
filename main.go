@@ -12,12 +12,13 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func (a *Atomstr) processFeeds(work string) {
+func (a *Atomstr) startWorkers(work string) {
 	feeds := a.dbGetAllFeeds()
 	if len(*feeds) == 0 {
 		log.Println("[WARN] No feeds found")
 	}
-	log.Println("[INFO] Updating feeds")
+
+	log.Println("[INFO] Start", work)
 
 	ch := make(chan feedStruct)
 	wg := sync.WaitGroup{}
@@ -40,12 +41,10 @@ func (a *Atomstr) processFeeds(work string) {
 
 	close(ch) // this will cause the workers to stop and exit their receive loop
 	wg.Wait() // make sure they all exit
-
-	log.Println("[INFO] Finished updating feeds")
+	log.Println("[INFO] Stop", work)
 }
 
 func main() {
-	//db := dbInit()
 	a := &Atomstr{db: dbInit()}
 
 	logger()
@@ -67,10 +66,8 @@ func main() {
 		go a.webserver()
 
 		// first run
-		//a.nostrUpdateAllFeedsMetadata()
-		//a.processFeeds()
-		a.processFeeds("metadata")
-		a.processFeeds("scrape")
+		a.startWorkers("metadata")
+		a.startWorkers("scrape")
 
 		metadataTicker := time.NewTicker(metadataInterval)
 		updateTicker := time.NewTicker(fetchInterval)
@@ -83,10 +80,9 @@ func main() {
 			for {
 				select {
 				case <-metadataTicker.C:
-					//a.nostrUpdateAllFeedsMetadata()
-					a.processFeeds("metadata")
+					a.startWorkers("metadata")
 				case <-updateTicker.C:
-					a.processFeeds("scrape")
+					a.startWorkers("scrape")
 				}
 			}
 		}()
