@@ -64,4 +64,4 @@ Delete a feed:
 
 Questions? Ideas? File bugs and TODOs through the [issue
 tracker](https://todo.sr.ht/~psic4t/atomstr) or send an email to
-[~psic4t/atomstr@todo.sr.ht](mailto:~psic4t/atomstr@todo.sr.ht)
+[~psic4t/atomstr@todo.sr.ht](mailto:~psic4t/public-inbox@todo.sr.ht)
