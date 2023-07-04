@@ -52,6 +52,7 @@ func main() {
 	feedNew := flag.String("a", "", "Add a new URL to scrape")
 	feedDelete := flag.String("d", "", "Remove a feed from db")
 	flag.Bool("l", false, "List all feeds with npubs")
+	flag.Bool("v", false, "Shows version")
 	flag.Parse()
 	flagset := make(map[string]bool) // map for flag.Visit. get bools to determine set flags
 	flag.Visit(func(f *flag.Flag) { flagset[f.Name] = true })
@@ -62,7 +63,10 @@ func main() {
 		a.listFeeds()
 	} else if flagset["d"] {
 		a.deleteSource(*feedDelete)
+	} else if flagset["v"] {
+		log.Println("[INFO] atomstr version ", atomstrversion)
 	} else {
+		log.Println("[INFO] Starting atomstr v", atomstrversion)
 		go a.webserver()
 
 		// first run
