@@ -4,6 +4,7 @@ atomstr is a RSS/Atom gateway to Nostr.
 
 It fetches all sorts of RSS or Atom feeds, generates Nostr profiles for each and posts new entries to given Nostr relay(s). If you have one of these relays in your profile, you can find and subscribe to the feeds.
 
+Although self hosting is preferable (it always is), there's a test instance at [https://atomstr.data.haus](https://atomstr.data.haus) - please don't hammer this too much as it is running next to my desk.
 
 ## Features
 

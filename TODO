@@ -1,11 +1,7 @@
 # mucho mucho
 
-* use environment variables to configure
-* Webpage
 * error handling!
 * formatting
-* maybe waitgroups?
-* provide Dockerfile
 * categories as tags
-* NIP05
 * longer term: TikTok support
+* fix NIP-05 for URLs containing @.
